@@ -1,0 +1,170 @@
+[
+  {
+    "name": "系统配置查询",
+    "description": "查询系统自身的配置数据，包括意图、功能、步骤和参数，用于系统自检和演示",
+    "category": "系统管理",
+    "keywords": "系统配置,意图列表,功能列表,步骤查询,参数查询,自检,演示,系统查询,SQLite",
+    "functions": [
+      {
+        "name": "意图列表查询",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@Keyword", "label": "关键词", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "查询意图列表",
+            "sqlText": "SELECT i.Id AS \"编号\", i.Name AS \"意图名称\", i.Category AS \"分类\", i.Description AS \"描述\", i.Keywords AS \"关键词\", CASE WHEN i.IsActive = 1 THEN '启用' ELSE '停用' END AS \"状态\", i.CreatedAt AS \"创建时间\" FROM Intents i WHERE (@Keyword IS NULL OR i.Name LIKE '%' || @Keyword || '%' OR i.Description LIKE '%' || @Keyword || '%' OR i.Keywords LIKE '%' || @Keyword || '%') ORDER BY i.Category, i.Name",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "未找到匹配的意图，请输入关键词搜索",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          {
+            "sortOrder": 1,
+            "stepType": "show_table",
+            "displayTitle": "意图列表",
+            "displaySource": "$result",
+            "displayConfig": "{\"columns\":[\"编号\",\"意图名称\",\"分类\",\"描述\",\"关键词\",\"状态\",\"创建时间\"]}"
+          },
+          { "sortOrder": 2, "stepType": "sql", "label": "按分类统计意图数量", "sqlText": "SELECT i.Category AS \"分类\", COUNT(*) AS \"意图数量\" FROM Intents i GROUP BY i.Category ORDER BY COUNT(*) DESC", "resultVar": "$stats", "expectOperator": "gt", "expectValue": "0", "expectOnFail": "goto", "expectTarget": 4, "expectMessage": "", "displayTitle": "", "displayConfig": "{}" },
+          { "sortOrder": 3, "stepType": "show_table", "displayTitle": "按分类统计", "displaySource": "$stats", "displayConfig": "{\"columns\":[\"分类\",\"意图数量\"]}" },
+          { "sortOrder": 4, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "功能列表查询",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@IntentName", "label": "意图名称", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "查询功能列表",
+            "sqlText": "SELECT f.Id AS \"编号\", f.Name AS \"功能名称\", i.Name AS \"所属意图\", f.Description AS \"描述\", f.DataSource AS \"数据源\", f.SortOrder AS \"排序\" FROM Functions f JOIN Intents i ON f.IntentId = i.Id WHERE (@IntentName IS NULL OR i.Name LIKE '%' || @IntentName || '%') ORDER BY i.Name, f.SortOrder",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "未找到匹配的功能",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "功能列表", "displaySource": "$result", "displayConfig": "{\"columns\":[\"编号\",\"功能名称\",\"所属意图\",\"描述\",\"数据源\",\"排序\"]}" },
+          { "sortOrder": 2, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "步骤详情查询",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@FunctionName", "label": "功能名称", "controlType": "TextBox", "isRequired": true }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "查询步骤列表",
+            "sqlText": "SELECT s.Id AS \"编号\", s.SortOrder AS \"排序\", s.StepType AS \"步骤类型\", s.Label AS \"标签\", s.ResultVar AS \"结果变量\", s.ExpectOperator AS \"预期操作符\", s.ExpectValue AS \"预期值\", s.ExpectOnFail AS \"失败处理\", s.ExpectTarget AS \"跳转目标\" FROM FlowSteps s JOIN Functions f ON s.FunctionId = f.Id WHERE f.Name LIKE '%' || @FunctionName || '%' ORDER BY s.FunctionId, s.SortOrder",
+            "resultVar": "$steps",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "未找到功能 {@FunctionName} 的步骤",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "步骤列表", "displaySource": "$steps", "displayConfig": "{\"columns\":[\"编号\",\"排序\",\"步骤类型\",\"标签\",\"结果变量\",\"预期操作符\",\"预期值\",\"失败处理\",\"跳转目标\"]}" },
+          { "sortOrder": 2, "stepType": "sql", "label": "查询步骤SQL", "sqlText": "SELECT s.Id AS \"编号\", s.SqlText AS \"SQL内容\", s.DisplayTitle AS \"展示标题\", s.DisplaySource AS \"展示变量\", s.DisplayConfig AS \"展示配置\" FROM FlowSteps s JOIN Functions f ON s.FunctionId = f.Id WHERE f.Name LIKE '%' || @FunctionName || '%' AND s.SqlText IS NOT NULL AND s.SqlText != '' ORDER BY s.FunctionId, s.SortOrder", "resultVar": "$sqls", "expectOperator": "gt", "expectValue": "0", "expectOnFail": "goto", "expectTarget": 4, "expectMessage": "", "displayTitle": "", "displayConfig": "{}" },
+          { "sortOrder": 3, "stepType": "show_table", "displayTitle": "步骤SQL内容", "displaySource": "$sqls", "displayConfig": "{\"columns\":[\"编号\",\"SQL内容\",\"展示标题\",\"展示变量\",\"展示配置\"]}" },
+          { "sortOrder": 4, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "参数列表查询",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@FunctionName", "label": "功能名称", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "查询参数列表",
+            "sqlText": "SELECT p.Id AS \"编号\", p.Name AS \"参数名\", p.Label AS \"显示标签\", p.ControlType AS \"控件类型\", p.IsRequired AS \"必填\", p.DefaultValue AS \"默认值\", f.Name AS \"所属功能\" FROM FunctionParameters p JOIN Functions f ON p.FunctionId = f.Id WHERE (@FunctionName IS NULL OR f.Name LIKE '%' || @FunctionName || '%') ORDER BY f.Name, p.SortOrder",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "未找到参数",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "参数列表", "displaySource": "$result", "displayConfig": "{\"columns\":[\"编号\",\"参数名\",\"显示标签\",\"控件类型\",\"必填\",\"默认值\",\"所属功能\"]}" },
+          { "sortOrder": 2, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "查询日志查看",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@Keyword", "label": "关键词", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "查询最近日志",
+            "sqlText": "SELECT q.Id AS \"编号\", q.InputText AS \"输入内容\", q.Parameters AS \"参数\", q.Similarity AS \"相似度\", q.ElapsedMs AS \"耗时(ms)\", q.ExecutedAt AS \"执行时间\" FROM QueryLog q WHERE (@Keyword IS NULL OR q.InputText LIKE '%' || @Keyword || '%') ORDER BY q.ExecutedAt DESC LIMIT 50",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "未找到查询日志",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "查询日志", "displaySource": "$result", "displayConfig": "{\"columns\":[\"编号\",\"输入内容\",\"参数\",\"相似度\",\"耗时(ms)\",\"执行时间\"]}" },
+          { "sortOrder": 2, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "系统统计概览",
+        "dataSource": "Config",
+        "parameters": [],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "系统概览统计",
+            "sqlText": "SELECT '意图数量' AS \"统计项\", CAST(COUNT(*) AS VARCHAR) AS \"数值\" FROM Intents UNION ALL SELECT '功能数量', CAST(COUNT(*) AS VARCHAR) FROM Functions UNION ALL SELECT '步骤数量', CAST(COUNT(*) AS VARCHAR) FROM FlowSteps UNION ALL SELECT '参数数量', CAST(COUNT(*) AS VARCHAR) FROM FunctionParameters UNION ALL SELECT '数据源数量', CAST(COUNT(*) AS VARCHAR) FROM DataSourceConfig UNION ALL SELECT '查询日志条数', CAST(COUNT(*) AS VARCHAR) FROM QueryLog",
+            "resultVar": "$stats",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "系统无数据",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "系统统计概览", "displaySource": "$stats", "displayConfig": "{\"columns\":[\"统计项\",\"数值\"]}" },
+          { "sortOrder": 2, "stepType": "sql", "label": "按步骤类型统计", "sqlText": "SELECT s.StepType AS \"步骤类型\", COUNT(*) AS \"数量\" FROM FlowSteps s GROUP BY s.StepType ORDER BY COUNT(*) DESC", "resultVar": "$stepTypes", "expectOperator": "gt", "expectValue": "0", "expectOnFail": "goto", "expectTarget": 4, "expectMessage": "", "displayTitle": "", "displayConfig": "{}" },
+          { "sortOrder": 3, "stepType": "show_table", "displayTitle": "步骤类型分布", "displaySource": "$stepTypes", "displayConfig": "{\"columns\":[\"步骤类型\",\"数量\"]}" },
+          { "sortOrder": 4, "stepType": "end" }
+        ]
+      }
+    ]
+  }
+]
