@@ -1,3 +1,8 @@
+# 注意 
+bge-small-zh-v1.5.onnx 文件 92MB，超过 GitHub 推荐的单文件大小上限，已分卷压缩为 3 个 RAR 文件存放在 Resources/ 目录下。使用前需要解压合并
+# Important
+bge-small-zh-v1.5.onnx is 92MB and exceeds GitHub's recommended file size. It is split into 3 RAR volumes (bge-small-zh-v1.5.part1.rar ~ part3.rar) in the Resources/ directory. Extract them before running
+
 # Intent Engine — 自然语言查询系统
 
 ## 这个工具解决什么问题
