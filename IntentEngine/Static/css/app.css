@@ -1,1 +1,161 @@
+body {
+    padding-bottom: 50px;
+    background-color: #f5f5f5;
+}
 
+#loginModal .modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+}
+
+#loginModal input {
+    font-size: 16px;
+    height: 44px;
+}
+
+.list-group-item {
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.2s;
+}
+.list-group-item:hover {
+    background-color: #f0f7ff;
+    border-left-color: #337ab7;
+}
+.list-group-item.active {
+    background-color: #337ab7;
+    border-color: #337ab7;
+}
+
+.badge-confidence-high { background-color: #5cb85c; }
+.badge-confidence-medium { background-color: #f0ad4e; }
+.badge-confidence-low { background-color: #d9534f; }
+
+.nav-tabs > li > a {
+    cursor: pointer;
+    font-size: 15px;
+}
+.nav-tabs > li.active > a {
+    font-weight: bold;
+}
+
+.result-section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.section-title {
+    padding: 10px 15px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: bold;
+    background: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 4px 4px 0 0;
+    color: #333;
+}
+.table-block {
+    padding: 0;
+}
+.table-block table {
+    margin-bottom: 0;
+}
+.text-block {
+    padding: 15px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #555;
+}
+.error-block {
+    padding: 15px;
+}
+.error-block .alert {
+    margin-bottom: 0;
+}
+
+.table-result {
+    width: 100%;
+    border-collapse: collapse;
+}
+.table-result th {
+    background: #f5f5f5;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 8px 10px;
+    border-bottom: 2px solid #ddd;
+}
+.table-result td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #eee;
+}
+.table-result tr:hover td {
+    background-color: #f9f9f9;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+.loading:after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+}
+@keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+
+.config-tree-item {
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background 0.15s;
+    font-size: 13px;
+}
+.config-tree-item:hover {
+    background: #e8f0fe;
+}
+.config-tree-item.active {
+    background: #337ab7;
+    color: #fff;
+}
+.config-tree-item .icon {
+    margin-right: 5px;
+}
+.config-tree-item .intent-icon  { color: #5cb85c; }
+.config-tree-item .func-icon    { color: #337ab7; }
+.config-tree-item .step-icon    { color: #f0ad4e; }
+.config-tree-item .param-icon   { color: #5bc0de; }
+
+.config-tree-children {
+    padding-left: 20px;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+}
+.detail-section h5 {
+    font-weight: bold;
+    color: #555;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+.detail-field {
+    margin-bottom: 8px;
+}
+.detail-field label {
+    font-weight: 600;
+    color: #666;
+    display: block;
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+.detail-field .value {
+    color: #333;
+    word-break: break-all;
+}
