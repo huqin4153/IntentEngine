@@ -1,0 +1,170 @@
+[
+  {
+    "name": "System Config Query",
+    "description": "Query the system's own configuration data including intents, functions, steps and parameters. Used for self-diagnosis and demo.",
+    "category": "System",
+    "keywords": "system config,intent list,function list,step query,parameter query,self-check,demo,system query,SQLite",
+    "functions": [
+      {
+        "name": "List Intents",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@Keyword", "label": "Keyword", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "Query intent list",
+            "sqlText": "SELECT i.Id AS \"ID\", i.Name AS \"Intent Name\", i.Category AS \"Category\", i.Description AS \"Description\", i.Keywords AS \"Keywords\", CASE WHEN i.IsActive = 1 THEN 'Active' ELSE 'Inactive' END AS \"Status\", i.CreatedAt AS \"Created At\" FROM Intents i WHERE (@Keyword IS NULL OR i.Name LIKE '%' || @Keyword || '%' OR i.Description LIKE '%' || @Keyword || '%' OR i.Keywords LIKE '%' || @Keyword || '%') ORDER BY i.Category, i.Name",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "No matching intents found. Please enter a keyword.",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          {
+            "sortOrder": 1,
+            "stepType": "show_table",
+            "displayTitle": "Intent List",
+            "displaySource": "$result",
+            "displayConfig": "{\"columns\":[\"ID\",\"Intent Name\",\"Category\",\"Description\",\"Keywords\",\"Status\",\"Created At\"]}"
+          },
+          { "sortOrder": 2, "stepType": "sql", "label": "Count intents by category", "sqlText": "SELECT i.Category AS \"Category\", COUNT(*) AS \"Count\" FROM Intents i GROUP BY i.Category ORDER BY COUNT(*) DESC", "resultVar": "$stats", "expectOperator": "gt", "expectValue": "0", "expectOnFail": "goto", "expectTarget": 4, "expectMessage": "", "displayTitle": "", "displayConfig": "{}" },
+          { "sortOrder": 3, "stepType": "show_table", "displayTitle": "By Category", "displaySource": "$stats", "displayConfig": "{\"columns\":[\"Category\",\"Count\"]}" },
+          { "sortOrder": 4, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "List Functions",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@IntentName", "label": "Intent Name", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "Query function list",
+            "sqlText": "SELECT f.Id AS \"ID\", f.Name AS \"Function Name\", i.Name AS \"Intent\", f.Description AS \"Description\", f.DataSource AS \"Data Source\", f.SortOrder AS \"Sort\" FROM Functions f JOIN Intents i ON f.IntentId = i.Id WHERE (@IntentName IS NULL OR i.Name LIKE '%' || @IntentName || '%') ORDER BY i.Name, f.SortOrder",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "No matching functions found.",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "Function List", "displaySource": "$result", "displayConfig": "{\"columns\":[\"ID\",\"Function Name\",\"Intent\",\"Description\",\"Data Source\",\"Sort\"]}" },
+          { "sortOrder": 2, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "Step Details",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@FunctionName", "label": "Function Name", "controlType": "TextBox", "isRequired": true }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "Query step list",
+            "sqlText": "SELECT s.Id AS \"ID\", s.SortOrder AS \"Sort\", s.StepType AS \"Type\", s.Label AS \"Label\", s.ResultVar AS \"Result Var\", s.ExpectOperator AS \"Expect Op\", s.ExpectValue AS \"Expect Val\", s.ExpectOnFail AS \"On Fail\", s.ExpectTarget AS \"Goto\" FROM FlowSteps s JOIN Functions f ON s.FunctionId = f.Id WHERE f.Name LIKE '%' || @FunctionName || '%' ORDER BY s.FunctionId, s.SortOrder",
+            "resultVar": "$steps",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "No steps found for function {@FunctionName}",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "Steps", "displaySource": "$steps", "displayConfig": "{\"columns\":[\"ID\",\"Sort\",\"Type\",\"Label\",\"Result Var\",\"Expect Op\",\"Expect Val\",\"On Fail\",\"Goto\"]}" },
+          { "sortOrder": 2, "stepType": "sql", "label": "Query step SQL", "sqlText": "SELECT s.Id AS \"ID\", s.SqlText AS \"SQL\", s.DisplayTitle AS \"Display Title\", s.DisplaySource AS \"Display Var\", s.DisplayConfig AS \"Display Config\" FROM FlowSteps s JOIN Functions f ON s.FunctionId = f.Id WHERE f.Name LIKE '%' || @FunctionName || '%' AND s.SqlText IS NOT NULL AND s.SqlText != '' ORDER BY s.FunctionId, s.SortOrder", "resultVar": "$sqls", "expectOperator": "gt", "expectValue": "0", "expectOnFail": "goto", "expectTarget": 4, "expectMessage": "", "displayTitle": "", "displayConfig": "{}" },
+          { "sortOrder": 3, "stepType": "show_table", "displayTitle": "Step SQL Content", "displaySource": "$sqls", "displayConfig": "{\"columns\":[\"ID\",\"SQL\",\"Display Title\",\"Display Var\",\"Display Config\"]}" },
+          { "sortOrder": 4, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "List Parameters",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@FunctionName", "label": "Function Name", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "Query parameter list",
+            "sqlText": "SELECT p.Id AS \"ID\", p.Name AS \"Param Name\", p.Label AS \"Label\", p.ControlType AS \"Control Type\", p.IsRequired AS \"Required\", p.DefaultValue AS \"Default\", f.Name AS \"Function\" FROM FunctionParameters p JOIN Functions f ON p.FunctionId = f.Id WHERE (@FunctionName IS NULL OR f.Name LIKE '%' || @FunctionName || '%') ORDER BY f.Name, p.SortOrder",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "No parameters found.",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "Parameters", "displaySource": "$result", "displayConfig": "{\"columns\":[\"ID\",\"Param Name\",\"Label\",\"Control Type\",\"Required\",\"Default\",\"Function\"]}" },
+          { "sortOrder": 2, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "Query Log Viewer",
+        "dataSource": "Config",
+        "parameters": [
+          { "name": "@Keyword", "label": "Keyword", "controlType": "TextBox", "isRequired": false }
+        ],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "Query recent logs",
+            "sqlText": "SELECT q.Id AS \"ID\", q.InputText AS \"Input\", q.Parameters AS \"Params\", q.Similarity AS \"Similarity\", q.ElapsedMs AS \"Time(ms)\", q.ExecutedAt AS \"Executed At\" FROM QueryLog q WHERE (@Keyword IS NULL OR q.InputText LIKE '%' || @Keyword || '%') ORDER BY q.ExecutedAt DESC LIMIT 50",
+            "resultVar": "$result",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "No query logs found.",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "Query Logs", "displaySource": "$result", "displayConfig": "{\"columns\":[\"ID\",\"Input\",\"Params\",\"Similarity\",\"Time(ms)\",\"Executed At\"]}" },
+          { "sortOrder": 2, "stepType": "end" }
+        ]
+      },
+      {
+        "name": "System Overview",
+        "dataSource": "Config",
+        "parameters": [],
+        "steps": [
+          {
+            "sortOrder": 0,
+            "stepType": "sql",
+            "label": "System statistics",
+            "sqlText": "SELECT 'Intents' AS \"Metric\", CAST(COUNT(*) AS VARCHAR) AS \"Value\" FROM Intents UNION ALL SELECT 'Functions', CAST(COUNT(*) AS VARCHAR) FROM Functions UNION ALL SELECT 'Steps', CAST(COUNT(*) AS VARCHAR) FROM FlowSteps UNION ALL SELECT 'Parameters', CAST(COUNT(*) AS VARCHAR) FROM FunctionParameters UNION ALL SELECT 'Data Sources', CAST(COUNT(*) AS VARCHAR) FROM DataSourceConfig UNION ALL SELECT 'Query Logs', CAST(COUNT(*) AS VARCHAR) FROM QueryLog",
+            "resultVar": "$stats",
+            "expectOperator": "gt",
+            "expectValue": "0",
+            "expectOnFail": "show_error",
+            "expectTarget": null,
+            "expectMessage": "System has no data.",
+            "displayTitle": "",
+            "displayConfig": "{}"
+          },
+          { "sortOrder": 1, "stepType": "show_table", "displayTitle": "System Overview", "displaySource": "$stats", "displayConfig": "{\"columns\":[\"Metric\",\"Value\"]}" },
+          { "sortOrder": 2, "stepType": "sql", "label": "Count by step type", "sqlText": "SELECT s.StepType AS \"Step Type\", COUNT(*) AS \"Count\" FROM FlowSteps s GROUP BY s.StepType ORDER BY COUNT(*) DESC", "resultVar": "$stepTypes", "expectOperator": "gt", "expectValue": "0", "expectOnFail": "goto", "expectTarget": 4, "expectMessage": "", "displayTitle": "", "displayConfig": "{}" },
+          { "sortOrder": 3, "stepType": "show_table", "displayTitle": "Step Type Distribution", "displaySource": "$stepTypes", "displayConfig": "{\"columns\":[\"Step Type\",\"Count\"]}" },
+          { "sortOrder": 4, "stepType": "end" }
+        ]
+      }
+    ]
+  }
+]
